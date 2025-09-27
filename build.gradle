@@ -1,0 +1,44 @@
+plugins {
+    id 'java'
+    id "io.qameta.allure" version "2.12.0"
+}
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+def allureVersion = "2.21.0",
+    junitVersion = "5.13.4",
+    slf4jVersion = "2.0.17"
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(17)
+//        vendor = JvmVendorSpec.ADOPTIUM // автоматически скачивает AdoptOpenJDK (Temurin)
+    }
+}
+
+dependencies {
+    testImplementation(
+            "io.qameta.allure:allure-junit5:$allureVersion",
+            "com.codeborne:selenide:5.25.0",
+            "io.qameta.allure:allure-selenide:$allureVersion",
+            "io.appium:java-client:7.6.0",
+            "org.junit.jupiter:junit-jupiter-api:$junitVersion")
+    testRuntimeOnly(
+            "org.slf4j:slf4j-simple:$slf4jVersion",
+            "org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+}
+
+test {
+    useJUnitPlatform()
+
+    testLogging {
+        events "skipped", "failed"
+        exceptionFormat "full"
+        showStandardStreams = true
+    }
+}
