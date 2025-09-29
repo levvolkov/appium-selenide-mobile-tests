@@ -1,0 +1,56 @@
+pipeline {
+    agent any
+    environment {
+            JAVA_HOME = "/Library/Java/JavaVirtualMachines/jdk-17.0.2.jdk/Contents/Home"
+            ANDROID_HOME = "${env.HOME}/Library/Android/sdk"
+            PATH = "${env.JAVA_HOME}/bin:${env.ANDROID_HOME}/platform-tools:${env.ANDROID_HOME}/tools:${env.PATH}"
+        }
+
+        triggers {
+            cron('0 0 * * *')
+        }
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Start Appium') {
+            steps {
+                sh '''
+                    appium &
+                    echo $! > appium.pid
+                    sleep 10
+                '''
+            }
+        }
+
+        stage('Build and Test') {
+            steps {
+                sh './gradlew clean test'
+            }
+            post {
+                always {
+                    sh '''
+                        if [ -f appium.pid ]; then
+                            kill $(cat appium.pid) || true
+                            rm -f appium.pid
+                        fi
+                    '''
+                    junit 'build/test-results/test/*.xml'
+                }
+            }
+        }
+    }
+
+    post {
+        success {
+            echo '✅ Tests passed'
+        }
+        failure {
+            echo '❌ Tests failed'
+        }
+    }
+}
